@@ -10,7 +10,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-app.use(cors());
+const corsOptions = {
+  origin: "https://apiwanaka.vercel.app/",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Allow credentials (e.g., cookies, authorization headers)
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
