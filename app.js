@@ -21,6 +21,12 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  "/socket.io",
+  express.static(
+    path.join(__dirname, "node_modules", "socket.io", "client-dist")
+  )
+);
 
 const client = new Client({
   authStrategy: new LocalAuth(),
