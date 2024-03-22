@@ -10,23 +10,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-const corsOptions = {
-  origin: "https://apiwanaka.vercel.app/",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // Allow credentials (e.g., cookies, authorization headers)
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(
-  "/socket.io",
-  express.static(
-    path.join(__dirname, "node_modules", "socket.io", "client-dist")
-  )
-);
 
 const client = new Client({
   authStrategy: new LocalAuth(),
@@ -35,8 +22,6 @@ const client = new Client({
   },
 });
 
-let isClientReady = false;
-let clientSocket;
 let today = new Date();
 let now = today.toLocaleString();
 
@@ -44,7 +29,7 @@ client.initialize();
 io.on("connection", (socket) => {
   console.log("A user connected");
   socket.emit("message", `${now} a user connected`);
-  clientSocket = socket;
+
   // Handle events
   client.on("qr", (qr) => {
     qrcode.toDataURL(qr, (err, url) => {
@@ -56,7 +41,7 @@ io.on("connection", (socket) => {
 
   client.on("ready", () => {
     console.log("READY");
-    isClientReady = true;
+
     socket.emit("message", `${now} Whatsapp is Ready!`);
   });
 
@@ -67,13 +52,13 @@ io.on("connection", (socket) => {
 
   client.on("auth_failure", (msg) => {
     console.error("AUTHENTICATION FAILURE", msg);
-    isClientReady = false;
+
     socket.emit("message", `${now} Authenticated was failure!`);
   });
 
   client.on("disconnected", (reason) => {
     console.log("Client was logged out", reason);
-    isClientReady = false;
+
     socket.emit("message", `${now} Whatsapp disconnected! reason: ${reason}`);
   });
   // Handle disconnection
@@ -83,9 +68,6 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  if (clientSocket) {
-    clientSocket.emit("message", `Status client : ${isClientReady}`);
-  }
   res.sendFile(__dirname + "/index.html");
 });
 
@@ -95,7 +77,6 @@ app.get("/api/send", (req, res) => {
   let message = req.query.message;
   const send = client.sendMessage(phone, message);
   if (send) {
-    clientSocket.emit("message", `${phone} send ${message}`);
     res.json({ msg: "Pesan Terkirim" }).status(200);
   } else {
     res.json({ msg: "Pesan Gagal Terkirim" }).status(404);
