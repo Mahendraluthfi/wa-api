@@ -63,7 +63,7 @@
 
     <script>
         $(document).ready(function () {
-            const socket = io('http://localhost:5000');
+            const socket = io('https://apiwanaka.vercel.app/');
             let logsEl = $("#logs");
 
             socket.on('message', function (msg) {
